@@ -1,23 +1,19 @@
+use crate::simulation::Simulation;
+
 mod constants;
 mod math_utils;
 mod physics;
-
-use math_utils::vector_2d::Vector2D;
-use constants::{GRAVITY, INITIAL_POSITION};
-use physics::dynamics;
+mod simulation;
 
 fn main() {
-    println!("Hello, world!");
+    
+    let mut sim = Simulation::new(0.00001);
+
+    sim.run(30.0);
+
+    // Exportar con coma (,) o punto y coma (;)
+    sim.export_logs_to_csv("logs.csv", ',').expect("Error al exportar CSV");
+
 }
 
 
-pub struct Simulation {
-    pub position: Vector2D,
-    pub steps: u32,
-}
-
-impl Simulation {
-    pub fn new(position: Vector2D, steps: u32) -> Simulation {
-        Simulation { position, steps }
-    }
-}
