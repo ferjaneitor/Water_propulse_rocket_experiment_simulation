@@ -1,43 +1,52 @@
-import os
-import pandas as pd
-import matplotlib
+from __future__ import annotations  # opcional, pero ayuda con tipos adelantados
 
-# Backend sin interfaz gráfica
-matplotlib.use("Agg")
+# pyright: strict, reportUnknownMemberType=none
+
+import os
+from typing import Final
+
+import matplotlib
+matplotlib.use("Agg")  # backend sin interfaz gráfica
 
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
+import pandas as pd
 
 # Ruta del CSV
-CSV_PATH = r"C:\Visual Studio\Trabajo personal\physics_calculations\logs.csv"
+CSV_PATH: Final[str] = r"C:\Visual Studio\Trabajo personal\physics_calculations\logs.csv"
 
 # Carpeta donde se guardarán las imágenes
-OUTPUT_DIR = r"C:\Visual Studio\Trabajo personal\salidas"
+OUTPUT_DIR: Final[str] = r"C:\Visual Studio\Trabajo personal\salidas"
 
 # ACTIVAR O NO la gráfica pesada con "todas las demás variables"
-GENERAR_FIGURA_OTRAS = False  # pon True si luego quieres probarla
+GENERAR_FIGURA_OTRAS: Final[bool] = False  # pon True si luego quieres probarla
 
 # DPI BAJO PARA QUE GUARDE RÁPIDO
-DPI_FIG = 80
+DPI_FIG: Final[int] = 80
 
 # Máximo de puntos para las gráficas de grupos
-MAX_POINTS_EXTRA = 5000
+MAX_POINTS_EXTRA: Final[int] = 5000
 
 
-def downsample_df(df, max_points=5000):
+def downsample_df(df: pd.DataFrame, max_points: int = 5000) -> pd.DataFrame:
     """Devuelve un DataFrame submuestreado a un máximo de max_points filas."""
-    n = len(df)
+    n: int = len(df)
     if n <= max_points:
         return df
-    step = max(n // max_points, 1)
+    step: int = max(n // max_points, 1)
     print(f"Submuestreando datos para grupos: tomando 1 de cada {step} filas.")
     return df.iloc[::step].reset_index(drop=True)
 
 
-def main():
+def main() -> None:
+    # Asegura que la carpeta de salida exista
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     print("Carpeta actual:", os.getcwd())
     print("Leyendo archivo:", CSV_PATH)
 
-    df = pd.read_csv(CSV_PATH)
+    df: pd.DataFrame = pd.read_csv(CSV_PATH)
 
     print("\nColumnas encontradas:")
     print(df.columns.tolist())
@@ -55,6 +64,8 @@ def main():
     y_full = df["y_m"]
 
     # --- Trayectoria Y vs X (full) ---
+    fig1: Figure
+    ax1: Axes
     fig1, ax1 = plt.subplots(figsize=(6, 4))
     ax1.plot(x_full, y_full, rasterized=True, antialiased=False)
     ax1.set_xlabel("Posición X (m)")
@@ -69,6 +80,8 @@ def main():
     plt.close(fig1)
 
     # --- X e Y vs tiempo (full) ---
+    fig2: Figure
+    ax2: Axes
     fig2, ax2 = plt.subplots(figsize=(6, 4))
     ax2.plot(t_full, x_full, label="x_m", rasterized=True, antialiased=False)
     ax2.plot(t_full, y_full, label="y_m", rasterized=True, antialiased=False)
@@ -86,7 +99,7 @@ def main():
     # ======================================
     # 2) GRÁFICAS DE GRUPOS (CON SUBMUESTREO)
     # ======================================
-    df_extra = downsample_df(df, MAX_POINTS_EXTRA)
+    df_extra: pd.DataFrame = downsample_df(df, MAX_POINTS_EXTRA)
     print(f"Filas usadas para grupos: {len(df_extra)}")
 
     t = df_extra["time_s"]
@@ -97,6 +110,8 @@ def main():
         print("\nGenerando figura con todas las variables excepto posición...")
         print("Columnas que se van a incluir:", other_cols)
 
+        fig3: Figure
+        ax3: Axes
         fig3, ax3 = plt.subplots(figsize=(8, 5))
         for c in other_cols:
             ax3.plot(t, df_extra[c], label=c, rasterized=True, antialiased=False)
@@ -119,6 +134,8 @@ def main():
     vel_cols_presentes = [c for c in vel_cols if c in df_extra.columns]
 
     if vel_cols_presentes:
+        fig_v: Figure
+        ax_v: Axes
         fig_v, ax_v = plt.subplots(figsize=(6, 4))
         for c in vel_cols_presentes:
             ax_v.plot(t, df_extra[c], label=c, rasterized=True, antialiased=False)
@@ -140,6 +157,8 @@ def main():
     acc_cols_presentes = [c for c in acc_cols if c in df_extra.columns]
 
     if acc_cols_presentes:
+        fig_a: Figure
+        ax_a: Axes
         fig_a, ax_a = plt.subplots(figsize=(6, 4))
         for c in acc_cols_presentes:
             ax_a.plot(t, df_extra[c], label=c, rasterized=True, antialiased=False)
@@ -161,6 +180,8 @@ def main():
     mass_cols_presentes = [c for c in mass_cols if c in df_extra.columns]
 
     if mass_cols_presentes:
+        fig_m: Figure
+        ax_m: Axes
         fig_m, ax_m = plt.subplots(figsize=(6, 4))
         for c in mass_cols_presentes:
             ax_m.plot(t, df_extra[c], label=c, rasterized=True, antialiased=False)
@@ -179,6 +200,8 @@ def main():
 
     # -------- Empuje (thrust_N) --------
     if "thrust_N" in df_extra.columns:
+        fig_thr: Figure
+        ax_thr: Axes
         fig_thr, ax_thr = plt.subplots(figsize=(6, 4))
         ax_thr.plot(t, df_extra["thrust_N"], label="thrust_N", rasterized=True, antialiased=False)
         ax_thr.set_xlabel("Tiempo (s)")
@@ -194,11 +217,13 @@ def main():
     else:
         print("Columna 'thrust_N' no encontrada.")
 
-
     # -------- Presión absoluta (pressure_abs_Pa) --------
     if "pressure_abs_Pa" in df_extra.columns:
+        fig_pre: Figure
+        ax_pre: Axes
         fig_pre, ax_pre = plt.subplots(figsize=(6, 4))
-        ax_pre.plot(t, df_extra["pressure_abs_Pa"], label="pressure_abs_Pa", rasterized=True, antialiased=False)
+        ax_pre.plot(t, df_extra["pressure_abs_Pa"], label="pressure_abs_Pa",
+                    rasterized=True, antialiased=False)
         ax_pre.set_xlabel("Tiempo (s)")
         ax_pre.set_ylabel("Presión absoluta (Pa)")
         ax_pre.set_title("Presión Absoluta vs Tiempo")
